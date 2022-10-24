@@ -34,16 +34,16 @@ def normalize(name: str):
 # recursively scan directory collect all nested paths in list, return list with paths (<class 'pathlib.WindowsPath'>)
 def scan_dir(path: Path, ignore: list):
     all_paths = []
-    _ = []
+    empty_for_ignor = []
 
-    for i in path.iterdir():
+    for every_path in path.iterdir():
 
-        if i.is_dir():
-            all_paths.append(i)
-            all_paths.extend(scan_dir(i, _))
+        if every_path.is_dir():
+            all_paths.append(every_path)
+            all_paths.extend(scan_dir(every_path, empty_for_ignor))
 
-        elif i.is_file():
-            all_paths.append(i)
+        elif every_path.is_file():
+            all_paths.append(every_path)
 
     return all_paths
 
@@ -51,15 +51,15 @@ def scan_dir(path: Path, ignore: list):
 # recursively scan directory collect all file paths in list, return list with paths (<class 'pathlib.WindowsPath'>)
 def collect_files_paths(path: Path, ignore: list):
     all_files_paths = []
-    _ = []
+    empty_list_for_ignor = []
 
-    for i in path.iterdir():
+    for every_path in path.iterdir():
 
-        if i.is_dir():
-            all_files_paths.extend(scan_dir(i, _))
+        if every_path.is_dir():
+            all_files_paths.extend(scan_dir(every_path, empty_list_for_ignor))
 
-        elif i.is_file():
-            all_files_paths.append(i)
+        elif every_path.is_file():
+            all_files_paths.append(every_path)
 
     return all_files_paths
 
@@ -75,27 +75,27 @@ def sort_files(paths_list, type_dict: dict, ):
     for key in sorted_dict.keys():
         sorted_dict[key] = []
 
-    for p in paths_list:
+    for path in paths_list:
         for file_type, extensions in type_dict.items():
-            if p.suffix.upper() in extensions:
-                sorted_dict[file_type].append(p)
-                result["known_extensions"].add(p.suffix)
+            if path.suffix.upper() in extensions:
+                sorted_dict[file_type].append(path)
+                result["known_extensions"].add(path.suffix)
                 continue
             else:
-                result["unknown_extensions"].add(p.suffix)
+                result["unknown_extensions"].add(path.suffix)
                 continue
-
 
     result["unknown_extensions"] = result["unknown_extensions"] ^ result["known_extensions"]
     result["unknown_extensions"] = list(result["unknown_extensions"])
     result["known_extensions"] = list(result["known_extensions"])
-    _ = []
+
+    list_for_pop = []
     for key, value in sorted_dict.items():
         if not value:
-            _.append(key)
+            list_for_pop.append(key)
 
-    for k in _:
-        del sorted_dict[k]
+    for key_for_pop in list_for_pop:
+        del sorted_dict[key_for_pop]
 
     return sorted_dict, result
 
@@ -103,29 +103,29 @@ def sort_files(paths_list, type_dict: dict, ):
 # create folders, named as keys in dictionary, return dict (folder_path : list_of_files)
 def create_folder(dictionary, path):
     updated_dictionary = {}
-    for key in dictionary:
-        Path(path, key).mkdir(exist_ok=True)
-        updated_dictionary[Path(path, key)] = dictionary[key]
+    for folder_name in dictionary:
+        Path(path, folder_name).mkdir(exist_ok=True)
+        updated_dictionary[Path(path, folder_name)] = dictionary[folder_name]
 
     return updated_dictionary
 
 
 def replace_repack(dictionary):
-    c = 1
+    count_for_rename = 1
     for folder_path, list_of_files in dictionary.items():
         for file in list_of_files:
             already_in_folder = []
 
-            for i in folder_path.iterdir():
-                already_in_folder.append(i.name)
+            for path in folder_path.iterdir():
+                already_in_folder.append(path.name)
 
             try:
                 shutil.unpack_archive(file, folder_path)
             except shutil.ReadError:
                 if file.name in already_in_folder:
-                    warming_name = f"{file.stem}_!!!_({c}){file.suffix}"
+                    warming_name = f"{file.stem}_!!!_({count_for_rename}){file.suffix}"
                     shutil.move(file, Path(folder_path, warming_name))
-                    c += 1
+                    count_for_rename += 1
                 else:
                     shutil.move(file, Path(folder_path, file.name))
 
@@ -133,7 +133,7 @@ def replace_repack(dictionary):
 # remove empty folders,
 def remove_empty(path: Path, ignore: list):
     all_folders = []
-    _ = []
+    empty_for_ignor = []
 
     for i in path.iterdir():
 
@@ -143,7 +143,7 @@ def remove_empty(path: Path, ignore: list):
         if i.is_dir():
             all_folders.append(i)
 
-            all_folders.extend(remove_empty(i, _))
+            all_folders.extend(remove_empty(i, empty_for_ignor))
 
     all_folders.reverse()
 
@@ -189,22 +189,26 @@ def organize(types_dictionary: dict, origin_path: Path, dest_path, ignore: list)
     return sorted_paths, res
 
 
+types = {"documents": ('.DOC', '.DOCX', '.TXT', '.PDF', '.XLSX', '.PPTX'),
+         "image": ('.JPEG', '.PNG', '.JPG', '.SVG', '.BMP'),
+         "video": ('.AVI', '.MP4', '.MOV', '.MKV'),
+         "music": ('.MP3', '.OGG', '.WAV', '.AMR'),
+         "archive": ('.ZIP', '.GZ', '.TAR')
+         }
+
+ignor_folders_list = list(types.keys())
+
+folders_names = "´, `".join(ignor_folders_list)
+
+original_path = Path(sys.argv[1])
+
 if __name__ == '__main__':
 
-    types = {"documents": ('.DOC', '.DOCX', '.TXT', '.PDF', '.XLSX', '.PPTX'),
-             "image": ('.JPEG', '.PNG', '.JPG', '.SVG', '.BMP'),
-             "video": ('.AVI', '.MP4', '.MOV', '.MKV'),
-             "music": ('.MP3', '.OGG', '.WAV', '.AMR'),
-             "archive": ('.ZIP', '.GZ', '.TAR')
-             }
-
-    ignor_folders_list = list(types.keys())
-    folders_names = "´, `".join(ignor_folders_list)
-
-    original_path = Path(sys.argv[1])
+    # print report of the start
     print(f"\nStart to organize the directory:\n"
           f"{original_path}")
 
+    # determinate the destination path
     try:
         destination_path = Path(sys.argv[2])
         print(f"\nDestination path is {destination_path}\n"
@@ -224,8 +228,10 @@ if __name__ == '__main__':
               f"will be replace in this folders\n"
               )
 
-    result_folders,result = organize(types, original_path, destination_path, ignor_folders_list)
+    # main function
+    result_folders, result = organize(types, original_path, destination_path, ignor_folders_list)
 
+    # print report of found files and extentions:
     print(f"\nDirectory {original_path}\n"
           f"was contained files with extensions:")
 

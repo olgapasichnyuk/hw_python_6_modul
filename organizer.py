@@ -157,12 +157,34 @@ def remove_empty(path: Path, ignore: list):
     return all_folders
 
 
-def organize(types_dictionary: dict, origin_path: Path, dest_path, ignore: list):
+def main(types_dictionary: dict, origin_path: Path, dest_path, ignore: list):
+
+    print(f"\nStart to organize the directory:\n"
+          f"{original_path}")
+
     if dest_path == origin_path:
         new_name_dir = normalize(origin_path.stem)
         origin_path = rename(origin_path, new_name_dir)
         dest_path = origin_path
+
+        print(f"\nDestination path didn't specify.\n"
+              f"In the directory:\n"
+              f"{original_path}\n"
+              f"will be created {len(ignor_folders_list)} folders:\n"
+              f" {folders_names}\n"
+              f"\nIf folders named: {folders_names} already exist,\n"
+              f"all the files in this folders will be ignored,\n"
+              f"but files from another folders from the directory:\n"
+              f"{original_path}\n"
+              f"will be replace in this folders\n"
+              )
+
     else:
+
+        print(f"\nDestination path is {destination_path}\n"
+              f"In the directory will be created {len(ignor_folders_list)} folders:\n"
+              f" {folders_names}\n")
+
         new_name_dir = normalize(origin_path.stem)
 
         origin_path = rename(origin_path, new_name_dir)
@@ -184,58 +206,11 @@ def organize(types_dictionary: dict, origin_path: Path, dest_path, ignore: list)
 
     remove_empty(origin_path, ignore)
 
-    # print (res) format!!!
-
-    return sorted_paths, res
-
-
-types = {"documents": ('.DOC', '.DOCX', '.TXT', '.PDF', '.XLSX', '.PPTX'),
-         "image": ('.JPEG', '.PNG', '.JPG', '.SVG', '.BMP'),
-         "video": ('.AVI', '.MP4', '.MOV', '.MKV'),
-         "music": ('.MP3', '.OGG', '.WAV', '.AMR'),
-         "archive": ('.ZIP', '.GZ', '.TAR')
-         }
-
-ignor_folders_list = list(types.keys())
-
-folders_names = "´, `".join(ignor_folders_list)
-
-original_path = Path(sys.argv[1])
-
-if __name__ == '__main__':
-
-    # print report of the start
-    print(f"\nStart to organize the directory:\n"
-          f"{original_path}")
-
-    # determinate the destination path
-    try:
-        destination_path = Path(sys.argv[2])
-        print(f"\nDestination path is {destination_path}\n"
-              f"In the directory will be created {len(ignor_folders_list)} folders:\n"
-              f" {folders_names}\n")
-    except IndexError:
-        destination_path = Path(original_path)
-        print(f"\nDestination path didn't specify.\n"
-              f"In the directory:\n"
-              f"{original_path}\n"
-              f"will be created {len(ignor_folders_list)} folders:\n"
-              f" {folders_names}\n"
-              f"\nIf folders named: {folders_names} already exist,\n"
-              f"all the files in this folders will be ignored,\n"
-              f"but files from another folders from the directory:\n"
-              f"{original_path}\n"
-              f"will be replace in this folders\n"
-              )
-
-    # main function
-    result_folders, result = organize(types, original_path, destination_path, ignor_folders_list)
-
-    # print report of found files and extentions:
+    # print report of found files and extensions:
     print(f"\nDirectory {original_path}\n"
           f"was contained files with extensions:")
 
-    for title, contain in result.items():
+    for title, contain in res.items():
         print("\n")
         print("{:-^75}".format(title))
 
@@ -254,7 +229,7 @@ if __name__ == '__main__':
     print(f"\nDirectory {original_path}\n"
           f"was contained this types of files:")
 
-    for title, contain in result_folders.items():
+    for title, contain in sorted_paths.items():
         print("\n")
         print("{:-^75}".format(title))
 
@@ -269,3 +244,30 @@ if __name__ == '__main__':
             else:
                 count = 1
                 print("\n")
+
+    return sorted_paths, res
+
+
+types = {"documents": ('.DOC', '.DOCX', '.TXT', '.PDF', '.XLSX', '.PPTX'),
+         "image": ('.JPEG', '.PNG', '.JPG', '.SVG', '.BMP'),
+         "video": ('.AVI', '.MP4', '.MOV', '.MKV'),
+         "music": ('.MP3', '.OGG', '.WAV', '.AMR'),
+         "archive": ('.ZIP', '.GZ', '.TAR')
+         }
+
+ignor_folders_list = list(types.keys())
+
+folders_names = "´, `".join(ignor_folders_list)
+
+original_path = Path(sys.argv[1])
+
+try:
+    destination_path = Path(sys.argv[2])
+except IndexError:
+    destination_path = Path(original_path)
+
+
+if __name__ == '__main__':
+
+    main(types, original_path, destination_path, ignor_folders_list)
+
